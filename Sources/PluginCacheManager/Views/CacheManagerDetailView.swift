@@ -2,6 +2,10 @@ import LumiUI
 import ProviderDiskCache
 import SwiftUI
 
+#if os(macOS)
+import AppKit
+#endif
+
 /// 缓存管理详情视图 —— 设置窗口「缓存」标签页。
 ///
 /// 总占用卡片（刷新 / 清空全部）+ 按插件分桶明细（单桶清空）。
@@ -34,6 +38,12 @@ struct CacheManagerDetailView: View {
         }
     }
 
+    #if os(macOS)
+    private func openCacheDirectory() {
+        NSWorkspace.shared.open(viewModel.cacheDirectoryURL)
+    }
+    #endif
+
     // MARK: - 总览
 
     private var overviewSection: some View {
@@ -59,6 +69,17 @@ struct CacheManagerDetailView: View {
                             viewModel.refresh()
                         }
                         .disabled(viewModel.isLoading || viewModel.isClearing)
+
+                        #if os(macOS)
+                        AppButton(
+                            pluginLocalization.string("Open Directory"),
+                            systemImage: "folder",
+                            style: .secondary,
+                            size: .small
+                        ) {
+                            openCacheDirectory()
+                        }
+                        #endif
 
                         AppButton(
                             pluginLocalization.string("Clear All Cache"),

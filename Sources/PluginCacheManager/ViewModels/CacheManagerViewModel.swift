@@ -22,6 +22,14 @@ final class CacheManagerViewModel: ObservableObject {
         self.cache = cache
     }
 
+    /// 缓存根目录，用于在 Finder 中打开（仅 macOS 有效）。
+    var cacheDirectoryURL: URL {
+        if let defaultProvider = cache as? DefaultDiskCacheProvider {
+            return defaultProvider.cacheRootDirectory
+        }
+        return DefaultDiskCacheProvider.makeDefaultCacheRootDirectory()
+    }
+
     var totalDescription: String {
         formattedBytes(report.totalBytes)
     }
