@@ -44,6 +44,54 @@ struct CacheManagerDetailView: View {
     }
     #endif
 
+    /// iOS 的卡片行自带发丝分隔线；macOS 的分组卡片需要显式分隔线。
+    @ViewBuilder
+    private var rowDivider: some View {
+        #if os(macOS)
+        Divider()
+            .padding(.vertical, 8)
+        #endif
+    }
+
+    private var refreshButton: some View {
+        AppButton(
+            viewModel.isLoading
+                ? pluginLocalization.string("Refreshing…")
+                : pluginLocalization.string("Refresh"),
+            systemImage: viewModel.isLoading ? "hourglass" : "arrow.clockwise",
+            style: .secondary,
+            size: .small
+        ) {
+            viewModel.refresh()
+        }
+        .disabled(viewModel.isLoading || viewModel.isClearing)
+    }
+
+    private var clearAllButton: some View {
+        AppButton(
+            pluginLocalization.string("Clear All Cache"),
+            systemImage: "trash",
+            style: .destructive,
+            size: .small
+        ) {
+            isConfirmingClearAll = true
+        }
+        .disabled(viewModel.isLoading || viewModel.isClearing || viewModel.report.totalBytes == 0)
+    }
+
+    #if os(macOS)
+    private var openDirectoryButton: some View {
+        AppButton(
+            pluginLocalization.string("Open Directory"),
+            systemImage: "folder",
+            style: .secondary,
+            size: .small
+        ) {
+            openCacheDirectory()
+        }
+    }
+    #endif
+
     // MARK: - 总览
 
     private var overviewSection: some View {
@@ -57,49 +105,30 @@ struct CacheManagerDetailView: View {
                     description: viewModel.totalDescription,
                     icon: "shippingbox"
                 ) {
-                    HStack(spacing: 8) {
-                        AppButton(
-                            viewModel.isLoading
-                                ? pluginLocalization.string("Refreshing…")
-                                : pluginLocalization.string("Refresh"),
-                            systemImage: viewModel.isLoading ? "hourglass" : "arrow.clockwise",
-                            style: .secondary,
-                            size: .small
-                        ) {
-                            viewModel.refresh()
-                        }
-                        .disabled(viewModel.isLoading || viewModel.isClearing)
-
-                        #if os(macOS)
-                        AppButton(
-                            pluginLocalization.string("Open Directory"),
-                            systemImage: "folder",
-                            style: .secondary,
-                            size: .small
-                        ) {
-                            openCacheDirectory()
-                        }
-                        #endif
-
-                        AppButton(
-                            pluginLocalization.string("Clear All Cache"),
-                            systemImage: "trash",
-                            style: .destructive,
-                            size: .small
-                        ) {
-                            isConfirmingClearAll = true
-                        }
-                        .disabled(viewModel.isLoading || viewModel.isClearing || viewModel.report.totalBytes == 0)
+                    #if os(iOS)
+                    VStack(alignment: .trailing, spacing: 6) {
+                        refreshButton
+                        clearAllButton
                     }
+                    #else
+                    HStack(spacing: 8) {
+                        refreshButton
+                        openDirectoryButton
+                        clearAllButton
+                    }
+                    #endif
                 }
 
                 if let feedback = viewModel.feedback {
-                    Divider()
-                        .padding(.vertical, 8)
+                    rowDivider
                     Text(feedback)
                         .font(.appCaption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
+                        #if os(iOS)
+                        .padding(.horizontal, 16)
+                        .padding(.vertical, 8)
+                        #endif
                 }
             }
         }
@@ -136,8 +165,7 @@ struct CacheManagerDetailView: View {
                         }
 
                         if index < viewModel.report.buckets.count - 1 {
-                            Divider()
-                                .padding(.vertical, 8)
+                            rowDivider
                         }
                     }
                 }
