@@ -38,6 +38,18 @@ struct CacheManagerViewModelTests {
         #expect(viewModel.isLoading == false)
     }
 
+    @Test("refreshAndWait 返回时报告已就绪")
+    func refreshAndWaitAwaitsReport() async {
+        let report = makeReport(total: 2048)
+        let cache = StubDiskCache(reports: [report])
+        let viewModel = CacheManagerViewModel(cache: cache)
+
+        await viewModel.refreshAndWait()
+
+        #expect(viewModel.report == report)
+        #expect(viewModel.isLoading == false)
+    }
+
     @Test("旧 refresh 晚到时不覆盖新报告")
     func staleRefreshIsDiscarded() async {
         let stale = makeReport(total: 111)

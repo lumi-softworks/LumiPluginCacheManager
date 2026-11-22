@@ -15,6 +15,26 @@ struct CacheManagerDetailView: View {
     @State private var isConfirmingClearAll = false
 
     var body: some View {
+        content
+            .onAppear {
+                viewModel.refresh()
+            }
+            .confirmationDialog(
+                pluginLocalization.string("Clear All Cache"),
+                isPresented: $isConfirmingClearAll,
+                titleVisibility: .visible
+            ) {
+                Button(pluginLocalization.string("Clear All Cache"), role: .destructive) {
+                    viewModel.clearAll()
+                }
+            } message: {
+                Text(pluginLocalization.string("Disk cache is disposable acceleration data. Clearing it will not delete any of your projects or documents; content will be re-fetched or rebuilt when needed."))
+            }
+    }
+
+    @ViewBuilder
+    private var content: some View {
+        #if os(macOS)
         AppSettingsContentScaffold(maxContentWidth: nil) {
             VStack(alignment: .leading, spacing: 24) {
                 overviewSection
@@ -22,21 +42,110 @@ struct CacheManagerDetailView: View {
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
-        .onAppear {
-            viewModel.refresh()
-        }
-        .confirmationDialog(
-            pluginLocalization.string("Clear All Cache"),
-            isPresented: $isConfirmingClearAll,
-            titleVisibility: .visible
-        ) {
-            Button(pluginLocalization.string("Clear All Cache"), role: .destructive) {
-                viewModel.clearAll()
+        #else
+        mobileContent
+        #endif
+    }
+
+    // MARK: - iOS
+
+    #if os(iOS)
+    /// 移动端使用系统 `Form`：分组列表、下拉刷新、行内滑动清理，
+    /// 与 iOS 设置页的层级、间距和破坏性操作惯例保持一致。
+    private var mobileContent: some View {
+        Form {
+            Section {
+                LabeledContent(pluginLocalization.string("Total Usage")) {
+                    Text(viewModel.totalDescription)
+                        .foregroundStyle(.secondary)
+                        .monospacedDigit()
+                }
+
+                Button(role: .destructive) {
+                    isConfirmingClearAll = true
+                } label: {
+                    Label {
+                        Text(pluginLocalization.string("Clear All Cache"))
+                    } icon: {
+                        Image(systemName: "trash")
+                            .foregroundStyle(.red)
+                    }
+                }
+                .disabled(viewModel.isLoading || viewModel.isClearing || viewModel.report.totalBytes == 0)
+            } header: {
+                Text(pluginLocalization.string("Disk Cache"))
+            } footer: {
+                if let feedback = viewModel.feedback {
+                    Text(feedback)
+                }
             }
-        } message: {
-            Text(pluginLocalization.string("Disk cache is disposable acceleration data. Clearing it will not delete any of your projects or documents; content will be re-fetched or rebuilt when needed."))
+
+            Section {
+                if viewModel.report.buckets.isEmpty {
+                    Text(pluginLocalization.string("No disk cache yet. Plugins will populate it as they download images and files."))
+                        .foregroundStyle(.secondary)
+                } else {
+                    ForEach(viewModel.report.buckets) { usage in
+                        bucketRow(usage)
+                    }
+                }
+            } header: {
+                Text(pluginLocalization.string("By Plugin"))
+            }
+        }
+        .refreshable {
+            await viewModel.refreshAndWait()
+        }
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    viewModel.refresh()
+                } label: {
+                    if viewModel.isLoading {
+                        ProgressView()
+                    } else {
+                        Image(systemName: "arrow.clockwise")
+                    }
+                }
+                .disabled(viewModel.isLoading || viewModel.isClearing)
+                .accessibilityLabel(pluginLocalization.string("Refresh"))
+            }
         }
     }
+
+    private func bucketRow(_ usage: DiskCacheBucketUsage) -> some View {
+        HStack(spacing: 12) {
+            VStack(alignment: .leading, spacing: 3) {
+                Text(usage.pluginID)
+                    .font(.subheadline)
+                Text(viewModel.description(for: usage))
+                    .font(.footnote)
+                    .foregroundStyle(.secondary)
+                    .monospacedDigit()
+            }
+            Spacer(minLength: 8)
+            Button {
+                viewModel.clearBucket(pluginID: usage.pluginID)
+            } label: {
+                Image(systemName: "trash")
+                    .foregroundStyle(.red)
+            }
+            .buttonStyle(.borderless)
+            .disabled(viewModel.isLoading || viewModel.isClearing)
+            .accessibilityLabel("\(pluginLocalization.string("Clear")) \(usage.pluginID)")
+        }
+        .swipeActions(edge: .trailing) {
+            Button(role: .destructive) {
+                viewModel.clearBucket(pluginID: usage.pluginID)
+            } label: {
+                Label(
+                    pluginLocalization.string("Clear"),
+                    systemImage: "trash"
+                )
+            }
+        }
+    }
+    #endif
 
     #if os(macOS)
     private func openCacheDirectory() {
