@@ -10,6 +10,7 @@ Disk cache is "safe to delete" acceleration data (downloaded images, fetched fil
 
 - Registers a settings entry (`id: "cache-manager"`, title "Cache", `shippingbox` icon) via `SettingViewProviding`
 - Total usage overview with a refresh action
+- Native iOS presentation: grouped `Form`, pull-to-refresh, toolbar refresh, swipe-to-clear per bucket
 - Per-plugin bucket breakdown (size · entry count)
 - Clear all cache with a destructive confirmation dialog explaining the data is disposable
 - Per-bucket clear via the management-only `clearBucket(pluginID:)` API, which preserves the producer plugin's custom eviction policy

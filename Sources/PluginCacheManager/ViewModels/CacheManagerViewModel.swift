@@ -48,11 +48,23 @@ final class CacheManagerViewModel: ObservableObject {
         beginLoading()
         Task { [weak self] in
             guard let self else { return }
-            defer { self.endLoading() }
-            let report = await self.cache.usageReport()
-            guard self.reportGeneration == generation else { return }
-            self.report = report
+            await self.finishRefresh(generation: generation)
         }
+    }
+
+    /// 等待本次读取完成的刷新，供 SwiftUI `.refreshable` 使用。
+    func refreshAndWait() async {
+        reportGeneration += 1
+        let generation = reportGeneration
+        beginLoading()
+        await finishRefresh(generation: generation)
+    }
+
+    private func finishRefresh(generation: Int) async {
+        defer { endLoading() }
+        let report = await cache.usageReport()
+        guard reportGeneration == generation else { return }
+        self.report = report
     }
 
     func clearAll() {
