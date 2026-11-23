@@ -14,12 +14,19 @@ final class CacheManagerViewModel: ObservableObject {
     @Published private(set) var feedback: String?
 
     private let cache: any DiskCacheProviding
+    private let pluginName: (String) -> String?
     private var reportGeneration = 0
     private var clearGeneration = 0
     private var loadingCount = 0
 
-    init(cache: any DiskCacheProviding) {
+    /// - Parameter pluginName: 把缓存桶的插件 ID 解析为面向用户的插件名；
+    ///   返回 nil（插件已卸载等）时回退到「未知插件」。
+    init(
+        cache: any DiskCacheProviding,
+        pluginName: @escaping (String) -> String? = { _ in nil }
+    ) {
         self.cache = cache
+        self.pluginName = pluginName
     }
 
     /// 缓存根目录，用于在 Finder 中打开（仅 macOS 有效）。
@@ -40,6 +47,11 @@ final class CacheManagerViewModel: ObservableObject {
             formattedBytes(usage.byteCount),
             usage.entryCount
         )
+    }
+
+    /// 分桶行的标题：插件显示名；解析不到（如插件已卸载留下的遗留缓存）时回退。
+    func title(for usage: DiskCacheBucketUsage) -> String {
+        pluginName(usage.pluginID) ?? pluginLocalization.string("Unknown Plugin")
     }
 
     func refresh() {

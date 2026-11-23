@@ -54,10 +54,29 @@ public final class CacheManagerPlugin: SuperPlugin, SuperLog {
             systemImage: "shippingbox",
             order: 60
         ) { [cache] in
-            CacheManagerDetailView(viewModel: CacheManagerViewModel(cache: cache))
+            CacheManagerDetailView(
+                viewModel: CacheManagerViewModel(
+                    cache: cache,
+                    pluginName: { pluginID in
+                        Self.displayName(for: pluginID, kernel: kernel)
+                    }
+                )
+            )
         }
 
         settings.addEntries([entry])
+    }
+
+    /// 把缓存桶的插件 ID 解析为插件显示名；兼容改名前的旧 ID 别名。
+    static func displayName(for pluginID: String, kernel: KernelCoreContainer) -> String? {
+        if let plugin = kernel.resolvePlugin(id: pluginID) {
+            return plugin.metadata.name
+        }
+        if let currentID = kernel.legacyPluginIDAliases.first(where: { $0.value == pluginID })?.key,
+           let plugin = kernel.resolvePlugin(id: currentID) {
+            return plugin.metadata.name
+        }
+        return nil
     }
 
     public func onShutdown(kernel: KernelCoreContainer) throws {

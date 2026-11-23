@@ -133,6 +133,24 @@ struct CacheManagerViewModelTests {
         #expect(viewModel.report == after)
     }
 
+    @Test("title 展示解析到的插件名")
+    func titleUsesResolvedPluginName() {
+        let usage = DiskCacheBucketUsage(pluginID: "plugin.0", byteCount: 1, entryCount: 1)
+        let viewModel = CacheManagerViewModel(cache: StubDiskCache(reports: [])) { id in
+            id == "plugin.0" ? "图片缓存" : nil
+        }
+
+        #expect(viewModel.title(for: usage) == "图片缓存")
+    }
+
+    @Test("title 在解析不到时回退到未知插件")
+    func titleFallsBackForUnknownPlugin() {
+        let usage = DiskCacheBucketUsage(pluginID: "legacy.plugin", byteCount: 1, entryCount: 1)
+        let viewModel = CacheManagerViewModel(cache: StubDiskCache(reports: [])) { _ in nil }
+
+        #expect(viewModel.title(for: usage) == pluginLocalization.string("Unknown Plugin"))
+    }
+
     @Test("重叠 refresh 的收尾不会误关新任务的加载标记")
     func overlappingRefreshKeepsLoadingFlag() async {
         let first = makeReport(total: 1)

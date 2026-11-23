@@ -116,7 +116,7 @@ struct CacheManagerDetailView: View {
     private func bucketRow(_ usage: DiskCacheBucketUsage) -> some View {
         HStack(spacing: 12) {
             VStack(alignment: .leading, spacing: 3) {
-                Text(usage.pluginID)
+                Text(viewModel.title(for: usage))
                     .font(.subheadline)
                 Text(viewModel.description(for: usage))
                     .font(.footnote)
@@ -132,7 +132,7 @@ struct CacheManagerDetailView: View {
             }
             .buttonStyle(.borderless)
             .disabled(viewModel.isLoading || viewModel.isClearing)
-            .accessibilityLabel("\(pluginLocalization.string("Clear")) \(usage.pluginID)")
+            .accessibilityLabel("\(pluginLocalization.string("Clear")) \(viewModel.title(for: usage))")
         }
         .swipeActions(edge: .trailing) {
             Button(role: .destructive) {
@@ -258,7 +258,7 @@ struct CacheManagerDetailView: View {
                 VStack(spacing: 0) {
                     ForEach(Array(viewModel.report.buckets.enumerated()), id: \.element.id) { index, usage in
                         AppSettingRow(
-                            title: usage.pluginID,
+                            title: viewModel.title(for: usage),
                             description: viewModel.description(for: usage),
                             icon: "puzzlepiece.extension"
                         ) {
