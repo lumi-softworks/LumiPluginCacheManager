@@ -10,7 +10,7 @@
 
 - 通过 `SettingViewProviding` 注册设置入口（`id: "cache-manager"`、标题「缓存」、`shippingbox` 图标）
 - 总占用概览，带刷新操作
-- iOS 使用系统 `Form` 原生布局：分组列表、下拉刷新、工具栏刷新、行内滑动清空
+- iOS / visionOS 使用系统 `Form` 原生布局：分组列表、下拉刷新、工具栏刷新、行内滑动清空
 - 按插件分桶明细（大小 · 条目数）
 - 全部清空：destructive 确认对话框，说明缓存是可删除数据
 - 单桶清空：走管理专用 `clearBucket(pluginID:)` API，保留生产插件自定义的淘汰策略

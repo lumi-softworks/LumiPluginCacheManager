@@ -47,9 +47,9 @@ struct CacheManagerDetailView: View {
         #endif
     }
 
-    // MARK: - iOS
+    // MARK: - iOS / visionOS
 
-    #if os(iOS)
+    #if os(iOS) || os(visionOS)
     /// 移动端使用系统 `Form`：分组列表、下拉刷新、行内滑动清理，
     /// 与 iOS 设置页的层级、间距和破坏性操作惯例保持一致。
     private var mobileContent: some View {
@@ -214,7 +214,7 @@ struct CacheManagerDetailView: View {
                     description: viewModel.totalDescription,
                     icon: "shippingbox"
                 ) {
-                    #if os(iOS)
+                    #if os(iOS) || os(visionOS)
                     VStack(alignment: .trailing, spacing: 6) {
                         refreshButton
                         clearAllButton
@@ -234,7 +234,7 @@ struct CacheManagerDetailView: View {
                         .font(.appCaption)
                         .foregroundStyle(.secondary)
                         .frame(maxWidth: .infinity, alignment: .leading)
-                        #if os(iOS)
+                        #if os(iOS) || os(visionOS)
                         .padding(.horizontal, 16)
                         .padding(.vertical, 8)
                         #endif
