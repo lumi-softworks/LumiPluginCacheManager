@@ -24,10 +24,21 @@ public final class CacheManagerPlugin: SuperPlugin, SuperLog {
     public let order = 120
     public let metadata: PluginMetadata
 
+    /// 宿主为「非插件」缓存桶注入的显示名解析器
+    /// （如 App 级 `com.coffic.cisum.cache.thumbnails` 桶）。
+    private let displayNameResolver: ((String) -> String?)?
+
     /// 创建缓存管理插件。
-    /// - Parameter id: 插件唯一标识；宿主可传入自己的 id（如 `com.coffic.juicenote.*`）。
-    public init(id: String = CacheManagerPlugin.defaultPluginID) {
+    /// - Parameters:
+    ///   - id: 插件唯一标识；宿主可传入自己的 id（如 `com.coffic.juicenote.*`）。
+    ///   - displayNameResolver: 为不属于任何插件的缓存桶提供显示名；
+    ///     返回 nil 时继续按插件 / 旧 ID 别名解析，仍未命中则显示「未知插件」。
+    public init(
+        id: String = CacheManagerPlugin.defaultPluginID,
+        displayNameResolver: ((String) -> String?)? = nil
+    ) {
         self.id = id
+        self.displayNameResolver = displayNameResolver
         self.metadata = PluginMetadata(
             id: id,
             name: pluginLocalization.string("Cache Manager"),
@@ -48,6 +59,7 @@ public final class CacheManagerPlugin: SuperPlugin, SuperLog {
             return
         }
 
+        let resolver = displayNameResolver
         let entry = SettingEntryItem(
             id: "cache-manager",
             title: pluginLocalization.string("Cache"),
@@ -58,7 +70,8 @@ public final class CacheManagerPlugin: SuperPlugin, SuperLog {
                 viewModel: CacheManagerViewModel(
                     cache: cache,
                     pluginName: { pluginID in
-                        Self.displayName(for: pluginID, kernel: kernel)
+                        resolver?(pluginID)
+                            ?? Self.displayName(for: pluginID, kernel: kernel)
                     }
                 )
             )

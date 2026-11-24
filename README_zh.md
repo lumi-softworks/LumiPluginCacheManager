@@ -16,6 +16,7 @@
 - 单桶清空：走管理专用 `clearBucket(pluginID:)` API，保留生产插件自定义的淘汰策略
 - 优雅降级：未注册 `SettingViewProviding` 或 `DiskCacheProviding` 时跳过入口
 - 宿主可参数化插件 id（`init(id:)`），默认 Lumi 命名空间
+- 宿主可为 App 级缓存桶注入显示名（`init(displayNameResolver:)`），不落入「未知插件」
 - 本地化：English、简体中文、繁體中文、粤语、台式繁体
 
 ## 依赖
@@ -35,8 +36,13 @@ import PluginCacheManager
 // 默认 ID（Lumi）
 kernel.boot(CacheManagerPlugin())
 
-// 宿主自定义 ID
-kernel.boot(CacheManagerPlugin(id: "com.coffic.juicenote.plugin.cache-manager"))
+// 宿主自定义 ID，并为 App 级缓存桶补显示名
+kernel.boot(CacheManagerPlugin(
+    id: "com.coffic.juicenote.plugin.cache-manager",
+    displayNameResolver: { bucketID in
+        bucketID.hasSuffix(".cache.thumbnails") ? "缩略图缓存" : nil
+    }
+))
 ```
 
 宿主需在启动插件前注册 `DiskCacheProviding`（如 `DefaultDiskCacheProvider()`）与 `SettingViewProviding`。

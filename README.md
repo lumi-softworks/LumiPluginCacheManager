@@ -16,6 +16,7 @@ Disk cache is "safe to delete" acceleration data (downloaded images, fetched fil
 - Per-bucket clear via the management-only `clearBucket(pluginID:)` API, which preserves the producer plugin's custom eviction policy
 - Graceful degradation: skips the entry when `SettingViewProviding` or `DiskCacheProviding` is not registered
 - Host-parameterizable plugin id (`init(id:)`), defaulting to Lumi's namespace
+- Host-provided display names for app-level cache buckets (`init(displayNameResolver:)`), so they don't show as “Unknown Plugin”
 - Localized in English, 简体中文, 繁體中文, 粤语, 台式繁体
 
 ## Dependencies
@@ -35,8 +36,13 @@ import PluginCacheManager
 // Default ID (Lumi)
 kernel.boot(CacheManagerPlugin())
 
-// Host custom ID
-kernel.boot(CacheManagerPlugin(id: "com.coffic.juicenote.plugin.cache-manager"))
+// Host custom ID, plus display names for app-level cache buckets
+kernel.boot(CacheManagerPlugin(
+    id: "com.coffic.juicenote.plugin.cache-manager",
+    displayNameResolver: { bucketID in
+        bucketID.hasSuffix(".cache.thumbnails") ? "Thumbnail Cache" : nil
+    }
+))
 ```
 
 The host must register `DiskCacheProviding` (e.g. `DefaultDiskCacheProvider()`) and `SettingViewProviding` before booting plugins.
